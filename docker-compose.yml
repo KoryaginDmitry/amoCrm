@@ -1,0 +1,49 @@
+version: '3.7'
+
+networks:
+    NetAmoCRM:
+        driver: bridge
+
+services:
+    nginx:
+        build:
+            context: .
+            dockerfile: Docker/Nginx.Dockerfile
+        ports:
+            - '8080:80'
+        volumes:
+            - ./:/var/www/amoCRM
+        networks:
+            - NetAmoCRM
+        container_name: AmoCRM_Nginx
+        depends_on:
+            - app
+            - pgsql
+
+    app:
+        build:
+            context: .
+            dockerfile: Docker/Fpm.Dockerfile
+        restart: unless-stopped
+        working_dir: /var/www/amoCRM
+        volumes:
+            - ./:/var/www/amoCRM
+        networks:
+            - NetAmoCRM
+        container_name: AmoCRM_App
+        depends_on:
+            - pgsql
+
+    pgsql:
+        image: postgres:latest
+        volumes:
+            - ./postgresql/data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: "laravel"
+            POSTGRES_USER: "userName"
+            POSTGRES_PASSWORD: "password"
+        ports:
+            - "5433:5432"
+        container_name: AmoCRM_PgSql
+        networks:
+            - NetAmoCRM
